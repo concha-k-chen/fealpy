@@ -8,14 +8,13 @@ ext = Extension(
     name="cgal_cython",
     sources=["cgal_cython.pyx", "cgal_wrapper.cpp"],
     include_dirs=["/usr/include",
-                  "/usr/lib/gcc/x86_64-linux-gnu/11/include",
                   "/usr/local/include",
                   "/home/concha/.local/cgal/include",
                   ],  # 确保包含 CGAL 头文件路径
     language="c++",
     extra_compile_args=["-std=c++17", "-fPIC"],
-    # library_dirs=["/home/concha/.local/cgal/lib", "/usr/local/lib"],  # 添加库路径
-    # libraries=["CGAL", "gmp", "mpfr"],
+    library_dirs=["/usr/lib/gcc/x86_64-linux-gnu"],  # 添加库路径
+    libraries=["gmp", "mpfr"],
 )
 
 setup(
