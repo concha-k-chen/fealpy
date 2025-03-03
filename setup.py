@@ -35,6 +35,33 @@ def load_requirements(path_dir=here, comment_char="#"):
 
 # build the third-party libraries and get the extension list
 ext_modules = build_ext()
+#
+# ext_modules_dict={
+#         "mumps": Extension(
+#             'fealpy.solver.mumps._dmumps',
+#             sources=['fealpy/solver/mumps/_dmumps.pyx'],
+#             libraries=['dmumps', 'mumps_common'],
+#             ),
+#         "cgal": Extension(
+#             name="cgal_cython",
+#             sources=["fealpy/geometry/cgal/cgal_cython.pyx", "fealpy/geometry/cgal/cgal_wrapper.cpp"],
+#             include_dirs=["./", os.path.expanduser("~/.local/cgal/include")],  # 确保包含 CGAL 头文件路径
+#             language="c++",
+#             # extra_compile_args=["-std=c++11", "-fPIC"],
+#             # libraries=["CGAL", "gmp", "mpfr"],  # 链接 CGAL 及其依赖
+#             ),
+#         }
+#
+# def get_ext_modules():
+#     ext_modules = []
+#     if os.getenv("WITH_MUMPS"):
+#         ext_modules.append(ext_modules_dict['mumps'])
+#     if os.getenv("WITH_CGAL"):
+#         ext_modules.append(ext_modules_dict['cgal'])
+#     return ext_modules
+#
+#
+# ext_modules = get_ext_modules()
 
 setup(
     name="fealpy",
