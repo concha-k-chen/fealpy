@@ -1,6 +1,7 @@
 import pytest
 
-from fealpy.geometry.geometry_kernel import geometry_kernel_manager as gkm
+from fealpy.backend import backend_manager as bm
+from fealpy.geometry import geometry_kernel_manager as gkm
 
 from geometry_base_data import *
 
@@ -9,12 +10,12 @@ class TestGeometryKernelBase:
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_load_kernel(self, input_data, kernel):
-        gkm.set_kernel(kernel)
+        gkm.set_adapter(kernel)
 
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_display(self, input_data, kernel):
-        gkm.set_kernel(kernel)
+        gkm.set_adapter(kernel)
 
         box1 = gkm.add_rectangle(0, 0, 0, 5, 10)
         box2 = gkm.add_rectangle(5, 5, 0, 5, 10)
@@ -25,7 +26,7 @@ class TestGeometryKernelBase:
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_entity_construct(self, input_data, kernel):
-        gkm.set_kernel(kernel)
+        gkm.set_adapter(kernel)
 
         # 点
         p1 = gkm.add_point(0, 0, 0)
@@ -42,12 +43,13 @@ class TestGeometryKernelBase:
         spline1 = gkm.add_spline(ctrl_points1)
         spline2 = gkm.add_spline([p1, p2, p3, p4])
         # 显示
-        gkm.display(p1, p2, p3, line, arc, arc2, spline1, spline2)
+        # gkm.display(p1, p2, p3, line, arc, arc2, spline1, spline2)
+        gkm.display(spline1)
 
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_entity_construct2(self, input_data, kernel):
-        gkm.set_kernel(kernel)
+        gkm.set_adapter(kernel)
 
         box = gkm.add_box(2, 2, 2, 1, 1, 1)
         ellipsoid = gkm.add_ellipsoid(0, 0, 0, 5, 3, 2)
@@ -55,20 +57,97 @@ class TestGeometryKernelBase:
         cylinder2 = gkm.add_cylinder(-2, -2, -2, 1, 4, axis=(1, 0, 0))
         ring = gkm.add_ring(10, 10, 0, 1, 2)
         torus = gkm.add_torus(10, 10, 0, 10, 2)
+        hollow_cyl = gkm.add_hollow_cylinder(0, 0, 0, 5, 3, 10)
 
-        gkm.display(box, ellipsoid, cylinder1, cylinder2, ring, torus, color=["blue", "red", "g", 'y'])
+
+        edges1 = [gkm.add_line((0, 0, 0), (5, 0, 0)),
+                 gkm.add_line((5, 0, 0), (5, 5, 0)),
+                 gkm.add_line((5, 5, 0), (0, 5, 0)),
+                 gkm.add_line((0, 5, 0), (0, 0, 0))]
+        edge_loop1 = gkm.add_curve_loop(edges1)
+        face1 = gkm.add_surface(edge_loop1)
+        edges2 = [gkm.add_line((0, 0, 5), (5, 0, 5)),
+                  gkm.add_line((5, 0, 5), (5, 5, 5)),
+                  gkm.add_line((5, 5, 5), (0, 5, 5)),
+                  gkm.add_line((0, 5, 5), (0, 0, 5))]
+        edge_loop2 = gkm.add_curve_loop(edges2)
+        face2 = gkm.add_surface(edge_loop2)
+        edges3 = [gkm.add_line((0, 0, 0), (0, 0, 5)),
+                  gkm.add_line((0, 0, 5), (5, 0, 5)),
+                  gkm.add_line((5, 0, 5), (5, 0, 0)),
+                  gkm.add_line((5, 0, 0), (0, 0, 0))]
+        edge_loop3 = gkm.add_curve_loop(edges3)
+        face3 = gkm.add_surface(edge_loop3)
+        edges4 = [gkm.add_line((0, 5, 0), (0, 5, 5)),
+                  gkm.add_line((0, 5, 5), (5, 5, 5)),
+                  gkm.add_line((5, 5, 5), (5, 5, 0)),
+                  gkm.add_line((5, 5, 0), (0, 5, 0))]
+        edge_loop4 = gkm.add_curve_loop(edges4)
+        face4 = gkm.add_surface(edge_loop4)
+        edges5 = [gkm.add_line((0, 0, 0), (0, 0, 5)),
+                    gkm.add_line((0, 0, 5), (0, 5, 5)),
+                    gkm.add_line((0, 5, 5), (0, 5, 0)),
+                    gkm.add_line((0, 5, 0), (0, 0, 0))]
+        edge_loop5 = gkm.add_curve_loop(edges5)
+        face5 = gkm.add_surface(edge_loop5)
+        edges6 = [gkm.add_line((5, 0, 0), (5, 0, 5)),
+                  gkm.add_line((5, 0, 5), (5, 5, 5)),
+                  gkm.add_line((5, 5, 5), (5, 5, 0)),
+                  gkm.add_line((5, 5, 0), (5, 0, 0))]
+        edge_loop6 = gkm.add_curve_loop(edges6)
+        face6 = gkm.add_surface(edge_loop6)
+        # gkm.display(face1, face2, face3, face4, face5, face6, color=["blue", "red", "green", "yellow", "purple", "orange"])
+        face_loop = gkm.add_face_loop([face1, face2, face3, face4, face5, face6])
+        box_solid = gkm.add_volume(face_loop)
+        gkm.display(box_solid)
+
+        rectangle = gkm.add_rectangle(0,0,0, 10, 5)
+        face = gkm.add_surface(rectangle)
+
+        gkm.display(face)
+
+
+    @pytest.mark.parametrize("kernel", ['occ'])
+    @pytest.mark.parametrize("input_data", geometry_data)
+    def test_entity_construct3(self, input_data, kernel):
+        gkm.set_adapter(kernel)
+
+
 
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_bool_operate(self, input_data, kernel):
-        gkm.set_kernel(kernel)
-        pass
+        gkm.set_adapter(kernel)
+
+        # box1 = gkm.add_box(0, 0, 0, 5, 5, 5)
+        # box2 = gkm.add_box(-2, -2, -2, 4, 3, 3)
+        #
+        # union = gkm.boolean_union(box1, box2)
+        # gkm.display(union)
+        # cut = gkm.boolean_cut(box1, box2)
+        # gkm.display(cut)
+        # intersect = gkm.boolean_intersect(box1, box2)
+        # gkm.display(intersect)
+        # fragment = gkm.boolean_fragment(box1, box2)
+        # gkm.display(fragment)
+        box = gkm.add_box(0, 0, 0, 5, 5, 5)
+        sphere = gkm.add_sphere(0, 0, 0, 3)
+
+        union = gkm.boolean_union(box, sphere)
+        gkm.display(union)
+        cut = gkm.boolean_cut(box, sphere)
+        gkm.display(cut)
+        intersect = gkm.boolean_intersect(box, sphere)
+        gkm.display(intersect)
+        fragment = gkm.boolean_fragment(box, sphere)
+        gkm.display(fragment)
+
 
 
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_geometry_operate(self, input_data, kernel):
-        gkm.set_kernel(kernel)
+        gkm.set_adapter(kernel)
 
         box_ori = gkm.add_box(0, 0, 0, 3, 4, 5)
         box_trans = gkm.translate(box_ori, (3, 4, 5))
@@ -81,11 +160,33 @@ class TestGeometryKernelBase:
                     color=["blue", "red", "green", "yellow", "purple"], transpose=0.5)
 
 
+    @pytest.mark.parametrize("kernel", ['occ'])
+    @pytest.mark.parametrize("input_data", geometry_data)
+    def test_shape_discrete(self, input_data, kernel):
+        from fealpy.mesh import TriangleMesh
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        gkm.set_adapter(kernel)
+
+        box = gkm.add_sphere(0, 0, 0, 5)
+
+        mesh = gkm.shape_discrete(box, deflection=0.1)
+        node = mesh[0]
+        cell = mesh[1]
+
+        tri_mesh = TriangleMesh(bm.array(node, dtype=bm.float64), bm.array(cell, dtype=bm.int32))
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        tri_mesh.add_plot(ax)
+        plt.show()
+
+
 
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_example_metalenses(self, input_data, kernel):
-        gkm.set_kernel(kernel)
+        gkm.set_adapter(kernel)
 
         ori = gkm.add_point(0, 0, 0)
         box_base = gkm.add_box(-12.5, -12.5, -0.1, 25, 25, 0.1)
@@ -96,17 +197,19 @@ class TestGeometryKernelBase:
 
         total_shape = gkm.boolean_union(box_base, box1, box2, box3)
 
-
         gkm.display(ori, total_shape)
 
+    @pytest.mark.parametrize("kernel", ['occ'])
+    @pytest.mark.parametrize("input_data", geometry_data)
+    def test_planetary_roller_screw(self, input_data, kernel):
+        gkm.set_adapter(kernel)
 
+        screw = gkm.add_cylinder(0, 0, 0, 18/2, 240)
+        nut = gkm.add_hollow_cylinder(0, 0, 0, 45/2, 35/2, 100)
+        roller = gkm.add_cylinder(13, 0, 0, 5.5/2, 100)
 
-
-
-
-
-
-
+        total_shape = gkm.boolean_union(screw, nut, roller)
+        gkm.display(total_shape)
 
 
 

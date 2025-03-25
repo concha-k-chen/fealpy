@@ -1,6 +1,41 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Tuple, List, Dict, Literal, Type
-from ... import logger
+from typing import Any, Optional, Tuple, List, Dict, Literal, Type, Union, Sequence
+import matplotlib.colors as mcolors
+from fealpy import logger
+
+
+# 辅助函数：十六进制颜色转RGB
+def hex_to_rgb(hex_color: str) -> tuple:
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i+2], 16)/255.0 for i in (0, 2, 4))
+
+
+def parse_color(color: Union[str, Sequence[float]]) -> tuple:
+    """
+    将颜色名称、简写或十六进制转换为 RGB 浮点数（0.0~1.0）
+
+    支持：
+    - 简写：'r'（红）、'g'（绿）、'b'（蓝）、'c'（青）、'm'（品红）、'y'（黄）、'k'（黑）、'w'（白）
+    - 颜色名称：'red', 'blue', 'steelblue' 等
+    - 十六进制字符串：'#FF0000'
+    - RGB 元组：(1.0, 0.0, 0.0)
+
+    Returns
+    -------
+    tuple
+        RGB 浮点数值（范围 0.0~1.0）
+    """
+    # 如果是 RGB 元组/列表，直接返回
+    if isinstance(color, (tuple, list)):
+        if len(color) != 3:
+            raise ValueError("RGB 格式需为长度为3的元组或列表。")
+        return tuple(color)
+
+    # 处理字符串（名称、简写、十六进制）
+    try:
+        return mcolors.to_rgb(color)
+    except ValueError:
+        raise ValueError(f"无效颜色格式：'{color}'。支持颜色名称（如 'red'）、简写（如 'r'）或十六进制（如 '#FF0000'）。")
 
 
 def _make_default_mapping(*names: str):
@@ -52,16 +87,16 @@ class ModuleProxy():
                            f"The argument will be ignored.")
 
 
-class GeometryKernelBase(ABC, ModuleProxy):
+class GeometryKernelAdapterBase(ABC, ModuleProxy):
     """几何内核适配器基类，定义所有内核必须实现的接口"""
-    _available_kernels: Dict[str, Type["GeometryKernelBase"]] = {}
+    _available_adapters: Dict[str, Type["GeometryKernelAdapterBase"]] = {}
 
-    def __init_subclass__(cls, kernel_name: str, **kwargs):
+    def __init_subclass__(cls, adapter_name: str, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        if kernel_name != "":
-            cls._available_kernels[kernel_name.lower()] = cls
-            cls.backend_name = kernel_name
+        if adapter_name != "":
+            cls._available_adapters[adapter_name.lower()] = cls
+            cls.backend_name = adapter_name
         else:
             raise ValueError("Backend name cannot be empty.")
 
@@ -73,44 +108,4 @@ class GeometryKernelBase(ABC, ModuleProxy):
     @abstractmethod
     def shutdown(self) -> None:
         """清理内核资源"""
-        pass
-
-    @abstractmethod
-    def create_box(self, width: float, height: float, depth: float) -> Any:
-        """创建立方体，返回内核内部对象句柄"""
-        pass
-
-    @abstractmethod
-    def create_sphere(self, radius: float) -> Any:
-        """创建球体"""
-        pass
-
-    @abstractmethod
-    def boolean_union(self, shape1: Any, shape2: Any) -> Any:
-        """布尔并集操作"""
-        pass
-
-    @abstractmethod
-    def boolean_difference(self, shape1: Any, shape2: Any) -> Any:
-        """布尔差集操作"""
-        pass
-
-    @abstractmethod
-    def transform(self, shape: Any, translation: Tuple[float, float, float], rotation: Tuple[float, ...]) -> Any:
-        """几何变换（平移+旋转）"""
-        pass
-
-    @abstractmethod
-    def get_volume(self, shape: Any) -> float:
-        """计算几何体体积"""
-        pass
-
-    @abstractmethod
-    def get_bounding_box(self, shape: Any) -> Tuple[Tuple[float, ...], Tuple[float, ...]]:
-        """获取几何体包围盒（min_point, max_point）"""
-        pass
-
-    @abstractmethod
-    def save_to_file(self, shape: Any, filename: str, format: str = "STEP") -> None:
-        """将几何体导出为文件（如STEP、IGES）"""
         pass

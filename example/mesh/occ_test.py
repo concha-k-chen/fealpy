@@ -1,4 +1,5 @@
 from OCC.Display.SimpleGui import init_display
+from sympy import transpose
 
 
 def add_rectangle(x: float, y: float, z: float, dx: float, dy: float):
@@ -138,7 +139,43 @@ if __name__ == '__main__':
     #
     # # 启动交互窗口
     # start_display()
-
     from fealpy.geometry.geometry_kernel import geometry_kernel_manager as gkm
-    gkm.set_kernel("occ")
+    gkm.set_adapter("occ")
+
+    # 基础测试
+    # box1 = gkm.add_rectangle(0, 0, 0, 5, 10)
+    # box2 = gkm.add_rectangle(5, 5, 0, 5, 10)
+    # circle = gkm.add_circle(5, 5, 0, 2.5)
+    #
+    # cut_result = gkm.boolean_cut(box1, circle)
+    # # gkm.display(cut_result, box2, background="w",
+    # #             window_size=(1024, 768),
+    # #             show_axes=True, zoom_all=True,
+    # #             color=["b", "#ff1a1a"], transpose=[0.2, 0.8])
+    #
+    # union_result = gkm.boolean_union(box1, box2, circle)
+    # gkm.display(union_result)
+
+    # 几何实体测试
+    # 点
+    p1 = gkm.add_point(0, 0, 0)
+    p2 = gkm.add_point(5, 5, 0)
+    p3 = gkm.add_point(10, 0, 0)
+    p4 = gkm.add_point(0, 10, 0)
+    # 线
+    line = gkm.add_line(p1, p2)
+    # 圆弧
+    arc = gkm.add_arc(p1, p2, p3)
+    arc2 = gkm.add_arc_center([0, 0, 0], [2, 0, 0], [-1, 0, 0])
+    # 样条曲线
+    ctrl_points1 = [(0, 0, 0), (2, 3, 1), (5, 4, 2), (7, 1, 3)]
+    spline1 = gkm.add_spline(ctrl_points1)
+    spline2 = gkm.add_spline([p1, p2, p3])
+    # 显示
+    gkm.display(p1, p2, p3, line, arc, arc2, spline1, spline2)
+
+
+
+    print(-1)
+
 
