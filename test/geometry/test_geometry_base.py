@@ -2,6 +2,7 @@ import pytest
 
 from fealpy.backend import backend_manager as bm
 from fealpy.geometry import geometry_kernel_manager as gkm
+from fealpy.utils import timer
 
 from geometry_base_data import *
 
@@ -43,22 +44,25 @@ class TestGeometryKernelBase:
         spline1 = gkm.add_spline(ctrl_points1)
         spline2 = gkm.add_spline([p1, p2, p3, p4])
         # 显示
-        # gkm.display(p1, p2, p3, line, arc, arc2, spline1, spline2)
-        gkm.display(spline1)
+        gkm.display(p1, p2, p3, line, arc, arc2, spline1, spline2,
+                    color=["blue", "red", "green", "yellow", "purple", "orange"],
+                    transpose=[0.3, 0.6, 0.9, 0.5, 0.7, 0.8],)
+        # gkm.display(spline1)
 
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_entity_construct2(self, input_data, kernel):
         gkm.set_adapter(kernel)
 
-        box = gkm.add_box(2, 2, 2, 1, 1, 1)
-        ellipsoid = gkm.add_ellipsoid(0, 0, 0, 5, 3, 2)
-        cylinder1 = gkm.add_cylinder(0, 0, 0, 1, 4)
-        cylinder2 = gkm.add_cylinder(-2, -2, -2, 1, 4, axis=(1, 0, 0))
+        box = gkm.add_box(2, 10, 2, 1, 1, 1)
+        ellipsoid = gkm.add_ellipsoid(-10, 0, 0, 5, 3, 2)
+        cylinder1 = gkm.add_cylinder(5, 5, 0, 1, 4)
+        cylinder2 = gkm.add_cylinder(-5, -5, -2, 1, 4, axis=(1, 0, 0))
         ring = gkm.add_ring(10, 10, 0, 1, 2)
         torus = gkm.add_torus(10, 10, 0, 10, 2)
-        hollow_cyl = gkm.add_hollow_cylinder(0, 0, 0, 5, 3, 10)
-
+        hollow_cyl = gkm.add_hollow_cylinder(0, -5, 0, 5, 3, 10)
+        gkm.display(box, ellipsoid, cylinder1, cylinder2, ring, torus, hollow_cyl,
+                    color=["blue", "red", "green", "yellow", "purple", "orange"],)
 
         edges1 = [gkm.add_line((0, 0, 0), (5, 0, 0)),
                  gkm.add_line((5, 0, 0), (5, 5, 0)),
@@ -210,6 +214,31 @@ class TestGeometryKernelBase:
 
         total_shape = gkm.boolean_union(screw, nut, roller)
         gkm.display(total_shape)
+
+
+    @pytest.mark.parametrize("kernel", ['occ'])
+    @pytest.mark.parametrize("input_data", geometry_data)
+    def test_performance(self, input_data, kernel):
+        gkm.set_adapter(kernel)
+
+        tmr = timer()
+        next(tmr)
+        maxiter = 500
+        boxs = []
+
+        for i in range(maxiter):
+            box = gkm.add_box(0, 0, 0, 1+i*1.5, 1, 1)
+            boxs.append(box)
+        tmr.send("生成 box 花费时间")
+
+        total_shape = gkm.boolean_union(*boxs)
+        tmr.send("生成联合体花费时间")
+
+        gkm.display(total_shape)
+        # gkm.display(*boxs)
+        tmr.send("显示花费时间")
+        next(tmr)
+
 
 
 

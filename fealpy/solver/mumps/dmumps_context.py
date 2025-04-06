@@ -4,7 +4,7 @@
 
 import warnings
 import numpy as np
-from . import _dmumps
+# from . import _dmumps
 
 __all__ = [
     'DMumpsContext',
