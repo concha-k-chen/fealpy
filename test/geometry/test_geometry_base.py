@@ -239,6 +239,25 @@ class TestGeometryKernelBase:
         tmr.send("显示花费时间")
         next(tmr)
 
+    @pytest.mark.parametrize("kernel", ['occ'])
+    @pytest.mark.parametrize("input_data", geometry_data)
+    def test_mult_input(self, input_data, kernel):
+        gkm.set_adapter(kernel)
+
+        # # 单个输入
+        # box1 = gkm.add_box(0, 0, 0, 5, 5, 5)
+        #
+        # # 列表
+        # data_list = [[0, 0, 0, 1, 1, 1], [1, 1, 1, 1, 1, 1], [2, 2, 2, 3, 3, 3]]
+        # boxes1 = gkm.add_box(data_list)
+        #
+        # # 元组
+        # data_tuple = ((0, 0, 0, 1, 1, 1), (1, 1, 1, 1, 1, 1), (2, 2, 2, 3, 3, 3))
+        # boxes3 = gkm.add_box(data_tuple)
+
+        # 数组
+        data_array = bm.array([[0, 0, 0, 1, 1, 1], [1, 1, 1, 1, 1, 1], [2, 2, 2, 3, 3, 3]])
+        boxes5 = gkm.add_box(data_array)
 
 
 

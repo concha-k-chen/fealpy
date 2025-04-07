@@ -1,5 +1,6 @@
 from typing import Any, Optional, Tuple, List, Dict, Literal, Union, Sequence
 from math import pi, sin, cos
+from ..decorator import multi_input
 
 from .geometry_kernel_adapter_base import (
     GeometryKernelAdapterBase, ATTRIBUTE_MAPPING,
@@ -912,6 +913,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
 
     # 3d entity
     @staticmethod
+    @multi_input
     def add_box(
             x_min: float,
             y_min: float,
