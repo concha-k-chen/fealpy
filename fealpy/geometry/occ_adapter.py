@@ -758,6 +758,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
     # entity sample
     # 2d entity
     @staticmethod
+    @multi_input
     def add_rectangle(x_min: float, y_min: float, z_min: float, dx: float, dy: float) -> TopoDS_Face:
         """
         创建一个矩形
@@ -803,6 +804,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         return BRepBuilderAPI_MakeFace(wire_builder.Wire()).Face()
 
     @staticmethod
+    @multi_input
     def add_disk(xc: float, yc: float, zc: float, rx: float, ry: float) -> TopoDS_Face:
         """
         创建一个椭圆
@@ -833,6 +835,8 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         )
 
         # 2. 创建椭圆几何体
+        if rx < ry:
+            rx, ry = ry, rx
         geom_ellipse = Geom_Ellipse(ellipse_axis, rx, ry)
 
         # 3. 生成完整椭圆边（角度范围 0~2π）
@@ -845,6 +849,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         return BRepBuilderAPI_MakeFace(wire).Face()
 
     @staticmethod
+    @multi_input
     def add_circle(xc: float, yc: float, zc: float, r: float) -> TopoDS_Face:
         """
         创建一个圆
@@ -862,6 +867,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         return OCCAdapter.add_disk(xc, yc, zc, r, r)
 
     @staticmethod
+    @multi_input
     def add_ring(
             xc: float,
             yc: float,
@@ -959,6 +965,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         return box
 
     @staticmethod
+    @multi_input
     def add_ellipsoid(
             xc: float,
             yc: float,
@@ -1023,6 +1030,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         return transformed_shape
 
     @staticmethod
+    @multi_input
     def add_sphere(xc: float, yc: float, zc: float, radius: float) -> TopoDS_Solid:
         """
         创建球体
@@ -1053,12 +1061,14 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         return OCCAdapter.add_ellipsoid(xc, yc, zc, radius, radius, radius)
 
     @staticmethod
+    @multi_input
     def add_cylinder(
             xc: float,
             yc: float,
             zc: float,
             radius: float,
             height: float,
+            *,
             axis: Tuple[float, float, float] = (0, 0, 1)
     ) -> TopoDS_Solid:
         """
@@ -1096,6 +1106,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         return OCCAdapter.translate(cylinder, (xc, yc, zc))
 
     @staticmethod
+    @multi_input
     def add_torus(
             xc: float,
             yc: float,
@@ -1137,6 +1148,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         return BRepPrimAPI_MakeTorus(ax, major_r, minor_r).Solid()
 
     @staticmethod
+    @multi_input
     def add_hollow_cylinder(
         xc: float,
         yc: float,
@@ -1144,6 +1156,7 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
         outer_radius: float,
         inner_radius: float,
         height: float,
+            *,
         axis: Tuple[float, float, float] = (0, 0, 1)
     ) -> TopoDS_Solid:
         """
@@ -1185,12 +1198,12 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
 
         # 1. 创建外圆柱
         outer_cyl = OCCAdapter.add_cylinder(
-            xc, yc, zc, outer_radius, height, axis
+            xc, yc, zc, outer_radius, height, axis=axis
         )
 
         # 2. 创建内圆柱（与外部同轴）
         inner_cyl = OCCAdapter.add_cylinder(
-            xc, yc, zc, inner_radius, height, axis
+            xc, yc, zc, inner_radius, height, axis=axis
         )
 
         # 3. 布尔差集操作（外 - 内）

@@ -242,23 +242,82 @@ class TestGeometryKernelBase:
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_mult_input(self, input_data, kernel):
+        # bm.set_backend("pytorch")
         gkm.set_adapter(kernel)
 
-        # # 单个输入
-        # box1 = gkm.add_box(0, 0, 0, 5, 5, 5)
-        #
-        # # 列表
-        # data_list = [[0, 0, 0, 1, 1, 1], [1, 1, 1, 1, 1, 1], [2, 2, 2, 3, 3, 3]]
-        # boxes1 = gkm.add_box(data_list)
-        #
-        # # 元组
-        # data_tuple = ((0, 0, 0, 1, 1, 1), (1, 1, 1, 1, 1, 1), (2, 2, 2, 3, 3, 3))
-        # boxes3 = gkm.add_box(data_tuple)
+        # box
+        # 单个输入
+        box1 = gkm.add_box(0, 0, 0, 5, 5, 5)
+        gkm.display(box1)
+
+        # 列表
+        data_list = [[0, 0, 0, 1, 1, 1], [1, 1, 1, 1, 1, 1], [2, 2, 2, 3, 3, 3]]
+        boxes1 = gkm.add_box(data_list)
+        gkm.display(boxes1, color="red")
+
+        # 元组
+        data_tuple = ((0, 0, 0, 1, 1, 1), (1, 1, 1, 1, 1, 1), (2, 2, 2, 3, 3, 3))
+        boxes3 = gkm.add_box(data_tuple)
+        gkm.display(boxes3, color="blue")
 
         # 数组
         data_array = bm.array([[0, 0, 0, 1, 1, 1], [1, 1, 1, 1, 1, 1], [2, 2, 2, 3, 3, 3]])
         boxes5 = gkm.add_box(data_array)
+        gkm.display(*boxes5, color=["green", "r", "y"])
 
+        # # add_rectangle
+        # data_array = bm.array([[0, 0, 0, 1, 1], [1, 1, 1, 1, 1], [2, 2, 2, 3, 3]])
+        # rectangles = gkm.add_rectangle(data_array)
+        # gkm.display(rectangles, color="green")
+        #
+        # # add_disk
+        # data_array = bm.array([[0, 0, 0, 1, 2], [1, 1, 1, 2, 3], [2, 2, 2, 3, 4]])
+        # disks = gkm.add_disk(data_array)
+        # gkm.display(disks, color="green")
+        #
+        # # add_circle
+        # data_array = bm.array([[0, 0, 0, 1], [1, 1, 1, 2], [2, 2, 2, 3]])
+        # circles = gkm.add_circle(data_array)
+        # gkm.display(circles, color="green")
+        #
+        # # add_ring
+        # data_array = bm.array([[0, 0, 0, 1, 2], [1, 1, 1, 2, 3], [2, 2, 2, 3, 4]])
+        # rings = gkm.add_ring(data_array)
+        # gkm.display(rings, color="green")
+        #
+        # # add_box
+        # data_array = bm.array([[0, 0, 0, 1, 1, 1], [1, 1, 1, 1, 1, 1], [2, 2, 2, 3, 3, 3]])
+        # boxes5 = gkm.add_box(data_array)
+        # gkm.display(boxes5, color="green")
+        #
+        # # add_ellipsoid
+        # data_array = bm.array([[0, 0, 0, 1, 2, 3], [4, 4, 4, 1.5, 2.5, 3.5], [8, 8, 8, 2, 3, 4]])
+        # ellipsoids = gkm.add_ellipsoid(data_array)
+        # gkm.display(ellipsoids, color="green")
+        #
+        # # add_sphere
+        # data_array = bm.array([[0, 0, 0, 1], [3, 3, 3, 1.5], [6, 6, 6, 2]])
+        # spheres = gkm.add_sphere(data_array)
+        # gkm.display(spheres, color="green")
+        #
+        # # add_cylinder
+        data_array = bm.array([[0, 0, 0, 1, 5],
+                                            [1, 1, 1, 2, 10]])
+        axis = bm.array([[1, 0, 0],
+                                [0, 1, 0]])
+        cylinders = gkm.add_cylinder(data_array, axis=axis)
+        gkm.display(cylinders, color="green")
+        #
+        # # add_torus
+        # data_array = bm.array([[0, 0, 0, 2, 1], [3, 3, 3, 3, 1.5], [8, 8, 8, 4, 2]])
+        # toruses = gkm.add_torus(data_array)
+        # gkm.display(toruses, color="green")
+        #
+        # # add_hollow_cylinder
+        # data_array = bm.array([[0, 0, 0, 2, 1, 3], [4, 4, 4, 2.5, 1.5, 3.5], [8, 8, 8, 3, 2, 4]])
+        # axis = bm.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        # hollow_cylinders = gkm.add_hollow_cylinder(data_array, axis=axis)
+        # gkm.display(hollow_cylinders, color="green")
 
 
 if __name__ == "__main__":
