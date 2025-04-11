@@ -58,11 +58,10 @@ class TestGeometryKernelBase:
         ellipsoid = gkm.add_ellipsoid(-10, 0, 0, 5, 3, 2)
         cylinder1 = gkm.add_cylinder(5, 5, 0, 1, 4)
         cylinder2 = gkm.add_cylinder(-5, -5, -2, 1, 4, axis=(1, 0, 0))
-        ring = gkm.add_ring(10, 10, 0, 1, 2)
         torus = gkm.add_torus(10, 10, 0, 10, 2)
-        hollow_cyl = gkm.add_hollow_cylinder(0, -5, 0, 5, 3, 10)
-        gkm.display(box, ellipsoid, cylinder1, cylinder2, ring, torus, hollow_cyl,
-                    color=["blue", "red", "green", "yellow", "purple", "orange"],)
+        hollow_cyl = gkm.add_hollow_cylinder(5, -6, 0, 5, 3, 10)
+        gkm.display(box, ellipsoid, cylinder1, cylinder2, torus, hollow_cyl,
+                    color=["blue", "red", "green", "k", "purple", "orange"])
 
         edges1 = [gkm.add_line((0, 0, 0), (5, 0, 0)),
                  gkm.add_line((5, 0, 0), (5, 5, 0)),
@@ -115,6 +114,15 @@ class TestGeometryKernelBase:
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_entity_construct3(self, input_data, kernel):
         gkm.set_adapter(kernel)
+
+        rectangle = gkm.add_rectangle(0, 0, 0, 3, 2)
+        disk = gkm.add_disk(5, -2, 0, 2, 3)
+        circle = gkm.add_circle(0, 5, 0, 3)
+        ring = gkm.add_ring(0, -5, 0, 2, 3)
+
+        gkm.display(rectangle, disk, circle, ring,
+                    color=["blue", "red", "green", "yellow"])
+
 
 
 
