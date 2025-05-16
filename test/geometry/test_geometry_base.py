@@ -198,18 +198,90 @@ class TestGeometryKernelBase:
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_example_metalenses(self, input_data, kernel):
-        gkm.set_adapter(kernel)
+        # 设置参数
+        square_size = 45  # 正方形的边长
+        circle_radius = 20  # 圆的半径
+        box_length = 0.24  # 长方体的长
+        box_width = 0.12  # 长方体的宽
+        box_height = 0.6  # 长方体的高
+        circle_radius = 20  # 圆的半径
+        square_size = 0.4  # 内部正方形的边长
+        spacing = 0.4  # 相邻正方形的中心间距
+        # 存储正方形中心坐标
+        square_centers = []
+        # 遍历圆内区域
+        num_squares_x = int(circle_radius / spacing)  # x方向正方形数量
+        num_squares_y = int(circle_radius / spacing)  # y方向正方形数量
+        for i in range(-num_squares_x, num_squares_x + 1):  # x方向
+            for j in range(-num_squares_y, num_squares_y + 1):  # y方向
+                # 计算正方形中心坐标
+                center_x = i * spacing
+                center_y = j * spacing
+                # 检查正方形的四个角点是否都在圆内
+                if (bm.sqrt((center_x - square_size / 2) ** 2 + (center_y - square_size / 2) ** 2) <= circle_radius) and \
+                        (bm.sqrt(
+                            (center_x + square_size / 2) ** 2 + (center_y - square_size / 2) ** 2) <= circle_radius) and \
+                        (bm.sqrt(
+                            (center_x - square_size / 2) ** 2 + (center_y + square_size / 2) ** 2) <= circle_radius) and \
+                        (bm.sqrt(
+                            (center_x + square_size / 2) ** 2 + (center_y + square_size / 2) ** 2) <= circle_radius):
+                    # 存储满足条件的中心坐标
+                    square_centers.append((center_x, center_y, 0))
+        # 将列表转换为二维数组
+        square_centers_array = bm.array(square_centers)
+        # 定义旋转的角度
+        # 参数定义
+        f = 60  # 设计焦距
+        Lambda = 0.98  # 入射光波长
 
-        ori = gkm.add_point(0, 0, 0)
-        box_base = gkm.add_box(-12.5, -12.5, -0.1, 25, 25, 0.1)
+        def rotate_angle(p):
+            x = p[..., 0]
+            y = p[..., 1]
+            # 计算旋转角度
+            theta = bm.pi / Lambda * (f - bm.sqrt(x ** 2 + y ** 2 + f ** 2))
+            return theta
 
-        box1 = gkm.add_box(-0.12, -0.06, 0.0, 0.24, 0.12, 0.6)
-        box2 = gkm.translate(box1, (0.4, 0, 0))
-        box3 = gkm.translate(gkm.rotate(box1, (0, 0, 0), (0, 0, 1), 3.14/4), (0, 0.4, 0))
+        def generate_square(center, length, width):
+            # 计算最小坐标点
+            min_coords = center - bm.array([length / 2, width / 2, 0])
+            return min_coords
 
-        total_shape = gkm.boolean_union(box_base, box1, box2, box3)
+        # 旋转的角度
+        angle = rotate_angle(square_centers_array)
+        # 旋转正方形的最小点坐标
+        min_coords = generate_square(square_centers_array, box_length, box_width)
+        total_shape = []
+        total_shape.append(gkm.add_box(-22.5, -22.5, -0.1, 45, 45, 0.1))
+        option = bm.concatenate((min_coords, square_centers_array), axis=1)
+        angle = angle.reshape(-1, 1)
+        option1 = bm.concatenate((option, angle), axis=1)
+        for i, j, k, m, n, l, angles in option1:
+            box = gkm.rotate(gkm.add_box(i, j, k, 0.24, 0.12, 0.6),
+                             (m, n, l), (0, 0, 1), angles)
+            total_shape.append(box)
 
-        gkm.display(ori, total_shape)
+        gkm.display(*total_shape)
+        from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
+        from OCC.Core.StlAPI import StlAPI_Writer
+        from OCC.Core.TopoDS import TopoDS_Shape
+        from OCC.Core.TopoDS import TopoDS_Compound
+        from OCC.Core.BRep import BRep_Builder
+        # 创建一个复合形状
+        compound = TopoDS_Compound()
+        builder = BRep_Builder()
+        builder.MakeCompound(compound)
+
+        # 将所有形状添加到复合形状中
+        for shape in total_shape:
+            builder.Add(compound, shape)
+
+        # 初始化 STL 写入器
+        stl_writer = StlAPI_Writer()
+        stl_writer.SetASCIIMode(True)  # True 为 ASCII 格式，False 为二进制格式
+
+        # 导出复合形状到 STL 文件
+        stl_writer.Write(compound, "metalenses.stl")
+        print("STL file 'metalenses.stl' has been created successfully.")
 
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
