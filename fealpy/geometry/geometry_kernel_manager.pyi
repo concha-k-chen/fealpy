@@ -83,12 +83,13 @@ class GeometryKernelManager:
     # shape discrete
     def shape_discrete(self, shape, deflection: float = 0.1) -> Any: ...  # 离散化（网格化）
 
-    # # file io
-    # def import_step(self, filename) -> Any: ...  # 导入STEP
-    # def export_step(self, shape, filename) -> None: ...  # 导出STEP（已部分实现）
-    # def export_stl(self, shape, filename, resolution=0.1) -> None: ...  # 导出STL（网格化）
-    # def export_brep(self, shape, filename) -> None: ...  # 原生BREP格式
-    # def export_gltf(self, shape, filename) -> None: ...  # 可视化友好格式
+    # file io
+    def import_step(self, filename) -> Any: ...  # 导入STEP
+    def import_stl(self, filename) -> Any: ...  # 导入STL
+    def import_brep(self, filename) -> Any: ...  # 导入BREP
+    def export_step(self, *shape, filename) -> None: ...  # 导出STEP
+    def export_stl(self, *shape, filename, resolution=0.1) -> None: ...  # 导出STL（网格化）
+    def export_brep(self, *shape, filename) -> None: ...  # 原生BREP格式
 
     # display
     def display(self,

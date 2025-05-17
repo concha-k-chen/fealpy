@@ -124,8 +124,6 @@ class TestGeometryKernelBase:
                     color=["blue", "red", "green", "yellow"])
 
 
-
-
     @pytest.mark.parametrize("kernel", ['occ'])
     @pytest.mark.parametrize("input_data", geometry_data)
     def test_bool_operate(self, input_data, kernel):
@@ -398,6 +396,34 @@ class TestGeometryKernelBase:
         # axis = bm.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         # hollow_cylinders = gkm.add_hollow_cylinder(data_array, axis=axis)
         # gkm.display(hollow_cylinders, color="green")
+
+    @pytest.mark.parametrize("kernel", ['occ'])
+    @pytest.mark.parametrize("input_data", geometry_data)
+    def test_import_export(self, input_data, kernel):
+        gkm.set_adapter(kernel)
+
+        box = gkm.add_box(2, 10, 2, 1, 1, 1)
+        ellipsoid = gkm.add_ellipsoid(-10, 0, 0, 5, 3, 2)
+        cylinder1 = gkm.add_cylinder(5, 5, 0, 1, 4)
+        cylinder2 = gkm.add_cylinder(-5, -5, -2, 1, 4, axis=(1, 0, 0))
+        torus = gkm.add_torus(10, 10, 0, 10, 2)
+        hollow_cyl = gkm.add_hollow_cylinder(5, -6, 0, 5, 3, 10)
+        total_shape = [box, ellipsoid, cylinder1, cylinder2, torus, hollow_cyl]
+
+        gkm.export_step(*total_shape, filename="box.step")
+        gkm.export_stl(*total_shape, filename="box.stl", resolution=0.1)
+        gkm.export_brep(*total_shape, filename="box.brep")
+
+        box1 = gkm.import_step("box.step")
+        box2 = gkm.import_stl("box.stl")
+        box3 = gkm.import_brep("box.brep")
+
+        gkm.display(box1)
+        gkm.display(box2)
+        gkm.display(box3)
+
+        metalenses = gkm.import_stl("metalenses.stl")
+        gkm.display(metalenses)
 
 
 if __name__ == "__main__":

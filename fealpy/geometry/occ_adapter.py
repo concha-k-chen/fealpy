@@ -1,4 +1,6 @@
 from typing import Any, Optional, Tuple, List, Dict, Literal, Union, Sequence
+from pathlib import Path
+import os
 from math import pi, sin, cos
 from ..decorator import multi_input
 
@@ -1288,6 +1290,272 @@ class OCCAdapter(GeometryKernelAdapterBase, adapter_name="occ"):
 
     # ===========================================================
     # file io
+    @staticmethod
+    def import_step(filename: Union[str, Path]) -> TopoDS_Shape:
+        """Import a STEP file and return a single shape.
+
+        Parameters
+        ----------
+        filename : Union[str, Path]
+            Path to the STEP file (.stp or .step).
+
+        Returns
+        -------
+        TopoDS_Shape
+            The shape extracted from the STEP file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the specified file does not exist.
+        RuntimeError
+            If the STEP file is invalid or cannot be read.
+        """
+        from OCC.Core.STEPControl import STEPControl_Reader
+
+        filename = str(filename)
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f"STEP file not found: {filename}")
+
+        reader = STEPControl_Reader()
+        status = reader.ReadFile(filename)
+        if status != 1:  # Check if reading was successful
+            raise RuntimeError(f"Failed to read STEP file: {filename}")
+
+        reader.TransferRoots()
+        shape = reader.OneShape()  # Get a single composite shape
+        if shape.IsNull():
+            raise RuntimeError(f"No valid shape found in STEP file: {filename}")
+
+        return shape
+
+    @staticmethod
+    def import_stl(filename: Union[str, Path]) -> TopoDS_Shape:
+        """Import an STL file and return a single shape.
+
+        Parameters
+        ----------
+        filename : Union[str, Path]
+            Path to the STL file (.stl, supports ASCII or binary format).
+
+        Returns
+        -------
+        TopoDS_Shape
+            The shape representing the STL mesh.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the specified file does not exist.
+        RuntimeError
+            If the STL file is invalid or cannot be read.
+        """
+        from OCC.Core.StlAPI import StlAPI_Reader
+
+        filename = str(filename)
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f"STL file not found: {filename}")
+
+        reader = StlAPI_Reader()
+        shape = TopoDS_Shape()
+        success = reader.Read(shape, filename)
+        if not success or shape.IsNull():
+            raise RuntimeError(f"Failed to read STL file: {filename}")
+
+        return shape
+
+    @staticmethod
+    def import_brep(filename: Union[str, Path]) -> 'TopoDS_Shape':
+        """Import a BREP file and return a single shape.
+
+        Parameters
+        ----------
+        filename : Union[str, Path]
+            Path to the BREP file (.brep).
+
+        Returns
+        -------
+        TopoDS_Shape
+            The shape representing the BREP geometry.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the specified file does not exist.
+        RuntimeError
+            If the BREP file is invalid, empty, or cannot be read.
+        """
+        # 局部导入
+        from OCC.Core.BRepTools import breptools_Read # type: ignore
+        from OCC.Core.TopoDS import TopoDS_Shape
+        from OCC.Core.BRep import BRep_Builder
+
+        path = Path(filename)
+        if not path.is_file():
+            raise FileNotFoundError(f"BREP file not found: {filename}")
+
+        builder = BRep_Builder()
+        shape = TopoDS_Shape()
+        success = breptools_Read(shape, str(path), builder)
+
+        if not success or shape.IsNull():
+            raise RuntimeError(f"Failed to read BREP file or the shape is null: {filename}")
+
+        return shape
+
+    @staticmethod
+    def export_step(*shape: TopoDS_Shape, filename: Union[str, Path]) -> None:
+        """Export multiple shapes to a STEP file.
+
+        Parameters
+        ----------
+        *shape : TopoDS_Shape
+            Variable number of shapes to export, merged into a composite shape.
+        filename : Union[str, Path]
+            Path to the output STEP file (.stp or .step).
+
+        Raises
+        ------
+        ValueError
+            If no shapes are provided or any shape is invalid.
+        FileNotFoundError
+            If the output directory is inaccessible.
+        RuntimeError
+            If the STEP export process fails.
+        """
+        from OCC.Core.STEPControl import STEPControl_Writer, STEPControl_AsIs
+        from OCC.Core.BRep import BRep_Builder
+
+        if not shape:
+            raise ValueError("No shapes provided for STEP export")
+
+        filename = str(filename)
+        output_dir = os.path.dirname(filename) or "."
+        if not os.path.isdir(output_dir):
+            raise FileNotFoundError(f"Output directory inaccessible: {output_dir}")
+
+        # Merge shapes into a compound
+        compound = TopoDS_Compound()
+        builder = BRep_Builder()
+        builder.MakeCompound(compound)
+        for s in shape:
+            if s.IsNull():
+                raise ValueError("Invalid shape provided for STEP export")
+            builder.Add(compound, s)
+
+        # Export to STEP
+        writer = STEPControl_Writer()
+        writer.Transfer(compound, STEPControl_AsIs)
+        status = writer.Write(filename)
+        if status != 1:  # Check if writing was successful
+            raise RuntimeError(f"Failed to export STEP file: {filename}")
+
+    @staticmethod
+    def export_stl(
+            *shape: TopoDS_Shape, filename: Union[str, Path], resolution: float = 0.1
+    ) -> None:
+        """Export multiple shapes to an STL file with mesh resolution control.
+
+        Parameters
+        ----------
+        *shape : TopoDS_Shape
+            Variable number of shapes to export, merged into a composite shape.
+        filename : Union[str, Path]
+            Path to the output STL file (.stl, supports ASCII or binary format).
+        resolution : float, optional
+            Linear deflection for meshing (smaller is finer, default is 0.1).
+
+        Raises
+        ------
+        ValueError
+            If no shapes are provided, any shape is invalid, or resolution <= 0.
+        FileNotFoundError
+            If the output directory is inaccessible.
+        RuntimeError
+            If the STL export process fails.
+        """
+        from OCC.Core.StlAPI import StlAPI_Writer
+        from OCC.Core.BRep import BRep_Builder
+        from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+
+        if not shape:
+            raise ValueError("No shapes provided for STL export")
+        if resolution <= 0:
+            raise ValueError("Resolution must be positive")
+
+        filename = str(filename)
+        output_dir = os.path.dirname(filename) or "."
+        if not os.path.isdir(output_dir):
+            raise FileNotFoundError(f"Output directory inaccessible: {output_dir}")
+
+        # Merge shapes into a compound
+        compound = TopoDS_Compound()
+        builder = BRep_Builder()
+        builder.MakeCompound(compound)
+        for s in shape:
+            if s.IsNull():
+                raise ValueError("Invalid shape provided for STL export")
+            builder.Add(compound, s)
+
+        # Mesh the compound
+        mesh = BRepMesh_IncrementalMesh(compound, resolution)
+        mesh.Perform()
+        if not mesh.IsDone():
+            raise RuntimeError("Meshing failed for STL export")
+
+        # Export to STL
+        writer = StlAPI_Writer()
+        writer.SetASCIIMode(True)  # Use ASCII format for compatibility
+        success = writer.Write(compound, filename)
+        if not success:
+            raise RuntimeError(f"Failed to export STL file: {filename}")
+
+    @staticmethod
+    def export_brep(*shape: TopoDS_Shape, filename: Union[str, Path]) -> None:
+        """Export multiple shapes to a BREP file.
+
+        Parameters
+        ----------
+        *shape : TopoDS_Shape
+            Variable number of shapes to export, merged into a composite shape.
+        filename : Union[str, Path]
+            Path to the output BREP file (.brep).
+
+        Raises
+        ------
+        ValueError
+            If no shapes are provided or any shape is invalid.
+        FileNotFoundError
+            If the output directory is inaccessible.
+        RuntimeError
+            If the BREP export process fails.
+        """
+        from OCC.Core.TopTools import TopTools_ListOfShape
+        from OCC.Core.BRep import BRep_Builder
+        from OCC.Core.BRepTools import breptools_Write # type: ignore
+
+        # 校验输入
+        if not shape:
+            raise ValueError("At least one shape must be provided for export.")
+        for s in shape:
+            if s.IsNull():
+                raise ValueError("One of the provided shapes is null/invalid.")
+
+        filename = Path(filename)
+        if not filename.parent.exists():
+            raise FileNotFoundError(f"Directory does not exist: {filename.parent}")
+
+        # 构建复合体（Compound）
+        builder = BRep_Builder()
+        compound = TopoDS_Compound()
+        builder.MakeCompound(compound)
+        for s in shape:
+            builder.Add(compound, s)
+
+        # 写入 BREP 文件
+        success = breptools_Write(compound, str(filename))
+        if not success:
+            raise RuntimeError(f"Failed to write BREP file: {filename}")
 
     # ===========================================================
     # display
