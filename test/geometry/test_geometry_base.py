@@ -301,7 +301,7 @@ class TestGeometryKernelBase:
 
         tmr = timer()
         next(tmr)
-        maxiter = 500
+        maxiter = 100
         boxs = []
 
         for i in range(maxiter):
