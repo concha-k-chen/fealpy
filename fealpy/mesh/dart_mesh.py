@@ -9,13 +9,14 @@ class DartMesh(Mesh, Plotable):
     """Dart mesh class.
 
     Parameters
-    ----------
-    node : TensorLike
-        Node coordinates of the mesh.
-    dart : TensorLike
-        用 dart 的顶点 v, 所属的边 e, 面 f, 单元 c 组成的元组 (v, e, f, c) 表示这个 dart，
-        以及附加的三个映射：下条边 b1，同单元对边 b2，不同单元对边 b3，
-        因此总体为 (v, e, f, c, b1, b2, b3) 的 dart 数据结构。
+        node : TensorLike
+            Node coordinates of the mesh.
+        dart : TensorLike
+            A dart is represented as a tuple (v, e, f, c) consisting of the dart's vertex v,
+            its associated edge e, face f, and cell c.
+            Additionally, three mappings are included: next edge b1, opposite edge in the same cell b2,
+            and opposite edge in a different cell b3.
+            Therefore, the overall dart data structure is (v, e, f, c, b1, b2, b3).
     """
 
     def __init__(self, node: TensorLike, dart: TensorLike):
@@ -42,7 +43,6 @@ class DartMesh(Mesh, Plotable):
 
         self.meshtype = 'dart3d'
 
-        # TODO: construct
         self.construct()
         # ==============================================
 
@@ -54,6 +54,9 @@ class DartMesh(Mesh, Plotable):
         self.meshdata = {}
 
     def construct(self):
+        """
+        Construct the dart mesh by creating mappings between different entities.
+        """
         NN = self.number_of_nodes()
         NE = self.number_of_edges()
         NF = self.number_of_faces()
@@ -302,9 +305,8 @@ class DartMesh(Mesh, Plotable):
         Export the DartMesh to a VTK file.
 
         Parameters
-        ----------
-        fname : str
-            The name of the file to save the mesh in VTK format.
+            fname : str
+                The name of the file to save the mesh in VTK format.
         """
         try:
             import vtk
@@ -454,14 +456,12 @@ class DartMesh(Mesh, Plotable):
         Create a dual mesh from the DartMesh.
 
         Parameters
-        ----------
-        dual_point : str, optional
-            The type of point to use for the dual mesh. 'barycenter' or 'circumcenter'.
+            dual_point : str, optional
+                The type of point to use for the dual mesh. 'barycenter' or 'circumcenter'.
 
         Returns
-        -------
-        Optional[DartMesh]
-            A new DartMesh representing the dual mesh.
+            dual_mesh: DartMesh
+                A new DartMesh representing the dual mesh.
         """
         dart = self.dart
         node = self.node
@@ -607,15 +607,17 @@ class DartMesh(Mesh, Plotable):
 
     def entity_barycenter(self, entityType='cell', index: Index = _S):
         """
-                获取实体的重心坐标
+        Get the barycenter of a specified entity type.
 
-                Parameters:
-                - entityType: 实体类型，可为 'edge'、'face'、'cell'
-                - index: 实体索引切片，默认为所有
+        Parameters:
+            entityType: str
+                entityType， 'edge', 'face' or 'cell'
+            index: Index
+                The index of the entity to compute the barycenter for.
 
-                Returns:
-                - bary: 每个实体的重心，形状为 (N, 3)
-                """
+        Returns:
+            bary: The barycenter coordinates of the specified entity type.
+        """
         node = self.node
 
         if entityType == 'edge':
@@ -663,18 +665,19 @@ class DartMesh(Mesh, Plotable):
 
     def entity_circumcenter(self, entityType='cell', index: Index = _S):
         """
-                计算实体的外接圆/球的球心，仅支持:
-                - 三角形面（face）
-                - 四面体单元（cell）
-                - 边缘中点（edge）
+        Get the circumcenter of a specified entity type.
 
-                Parameters:
-                - entityType: 'edge', 'face', 'cell'
-                - index: 实体索引
+        Parameters
+            entityType: str
+                The type of entity to compute the circumcenter for, can be 'edge', 'face', or 'cell'.
+            index: Index
+                The index of the entity to compute the circumcenter for.
 
-                Returns:
-                - center: 每个实体的球心坐标，形状为 (N, 3)
-                """
+        Returns
+            center: Tensor
+                The circumcenter coordinates of the specified entity type.
+
+        """
         node = self.node
 
         if entityType == 'edge':
@@ -727,14 +730,14 @@ class DartMesh(Mesh, Plotable):
     def from_mesh(cls, mesh:Union[TetrahedronMesh, HexahedronMesh])->'Optional[DartMesh]':
         """
         Create a DartMesh from a TetrahedronMesh or HexahedronMesh.
+
         Parameters
-        ----------
-        mesh : Union[TetrahedronMesh, HexahedronMesh]
-            The mesh to convert.
+            mesh : Union[TetrahedronMesh, HexahedronMesh]
+                The mesh to convert.
 
         Returns
-        -------
-
+            DartMesh: DartMesh
+                A new DartMesh created from the input mesh.
         """
         NE = mesh.number_of_edges()
         NF = mesh.number_of_faces()
