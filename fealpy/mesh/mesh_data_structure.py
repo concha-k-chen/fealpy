@@ -1,5 +1,7 @@
 
+import sys
 from typing import Union, Optional, Dict, overload, Callable, Any
+from logging import Logger
 
 from ..backend import backend_manager as bm
 from ..typing import TensorLike, Index, EntityName, _S, _int_func
@@ -16,6 +18,7 @@ from .utils import estr2dim, edim2entity, MeshMeta, flocc
 
 class MeshDS(metaclass=MeshMeta):
     _STORAGE_ATTR = ['cell', 'face', 'edge', 'node']
+    _logger: Logger = logger
     cell: TensorLike
     face: TensorLike
     edge: TensorLike
@@ -36,6 +39,31 @@ class MeshDS(metaclass=MeshMeta):
         self.TD = TD
         self.itype = itype
         self.ftype = ftype
+
+    def __str__(self) -> str:
+        """Return a summary of the mesh: type, entity counts, and memory usage.
+        """
+        return ("\n"
+            f"Mesh type: {self.__class__.__name__}:\n"
+            f"Number of nodes: {self.number_of_nodes()}\n"
+            f"Number of edges: {self.number_of_edges()}\n"
+            f"Number of faces: {self.number_of_faces()}\n"
+            f"Number of cells: {self.number_of_cells()}\n"
+            )
+
+    def __str__(self) -> str:
+        """Return a summary of the mesh: type, entity counts, and memory usage.
+
+        TODO: add memory usage for each entity type.
+        """
+
+        lines = []
+        lines.append(f"\n  Mesh type: {self.__class__.__name__}")
+        for name in self._STORAGE_ATTR:
+            count = getattr(self, f"number_of_{name}s")()
+            lines.append(f"  Number of {name}s: {count}")
+
+        return "\n".join(lines)
 
     @overload
     def __getattr__(self, name: EntityName) -> TensorLike: ...
@@ -60,6 +88,14 @@ class MeshDS(metaclass=MeshMeta):
             del self._entity_storage[estr2dim(self, name)]
         else:
             super().__delattr__(name)
+
+    @classmethod
+    def set_logger(cls, logger: Logger):
+        cls._logger = logger
+
+    @property
+    def logger(self) -> Logger:
+        return self._logger
 
     def clear(self) -> None:
         """Remove all entities from the storage."""
@@ -422,6 +458,7 @@ class MeshDS(metaclass=MeshMeta):
 
         NN = self.number_of_nodes()
         NF = i0.shape[0]
-        logger.info(f"Mesh toplogy relation constructed, with {NC} cells, {NF} "
-                    f"faces, {NN} nodes "
-                    f"on device ?")
+        self.logger.info(
+            f"Mesh topology relation constructed, with {NC} cells, {NF} "
+            f"faces, {NN} nodes on device {self.device}."
+        )
