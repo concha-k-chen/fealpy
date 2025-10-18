@@ -1177,6 +1177,10 @@ class TriangleMesh(SimplexMesh, Plotable):
     def show_function(self, plot, uh, cmap=None):
         pass
 
+    def cell_quality(self):
+
+        pass
+
     @classmethod
     def show_lattice(cls, p=1, showmultiindex=False):
         """

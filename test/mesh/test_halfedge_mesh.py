@@ -368,10 +368,34 @@ class TestHalfEdgeMesh():
         np.testing.assert_allclose(data['grad_shape_u'], grad_shape_u, atol=1e-12)
 
     def test_from_bdf_and_to_vtk(self):
-        file_path = 'Sheet_Metal_20250717_Before_Opt_v2.bdf'
+        file_path = 'D:/git_projects/fealpy/test/mesh/Sheet_Metal_20250717_Before_Opt_v2.bdf'
 
         half_edge_mesh = HalfEdgeMesh2d.from_bdf(file_path)
-        half_edge_mesh.to_vtk(fname="halfedge_mesh.vtu")
+        NN = half_edge_mesh.number_of_nodes()
+        NC = half_edge_mesh.number_of_cells()
+        node_data = bm.linspace(0, 1, NN)
+        cell_data = bm.linspace(0, 1, NC)
+        half_edge_mesh.nodedata['test_node_data'] = node_data
+        half_edge_mesh.celldata['test_cell_data'] = cell_data
+        cell2node = half_edge_mesh.cell_to_node()
+        half_edge_mesh.to_vtk(fname="D:/git_projects/fealpy/test/mesh/halfedge_mesh_new.vtu")
+
+    def test_mesh_data(self):
+        from fealpy.mesh import TriangleMesh
+
+        ori_mesh = TriangleMesh.from_box()
+        half_edge_mesh = HalfEdgeMesh2d.from_mesh(ori_mesh)
+
+        NN = half_edge_mesh.number_of_nodes()
+        NC = half_edge_mesh.number_of_cells()
+        node_data = bm.linspace(0, 1, NN)
+        cell_data = bm.linspace(0, 1, NC)
+        half_edge_mesh.nodedata['test_node_data'] = node_data
+        half_edge_mesh.celldata['test_cell_data'] = cell_data
+
+        half_edge_mesh.to_vtk(fname="./half_edge_mesh_with_data.vtu")
+
+        print(-1)
 
  
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, Dict, List
 from ..backend import backend_manager as bm
 from ..typing import TensorLike, Index, _S
 from .plot import Plotable
@@ -1022,6 +1022,8 @@ class HalfEdgeMesh2d(Mesh, Plotable):
 
         node = self.node
         halfedge = self.halfedge
+        point_data = self.nodedata
+        cell_data = self.celldata
         # 步骤 1: 提取唯一的单元及其顶点索引
         cell_idx = halfedge[:, 1]  # 每条半边的单元索引
         unique_cells = bm.unique(cell_idx[cell_idx >= 0])  # 忽略无效单元索引
@@ -1051,7 +1053,7 @@ class HalfEdgeMesh2d(Mesh, Plotable):
         # 步骤 2: 准备 PyVista 的点数据
         # 确保点数据格式为 (NN, 3)，2D 点补 z=0
         if node.shape[1] == 2:  # 2D 点，补 z=0
-            z = bm.zeros(len(cell_vertices)).reshape(-1, 1)
+            z = bm.zeros(len(node)).reshape(-1, 1)
             points = bm.concat([node, z], axis=1)  # 将 z 坐标补为 0
         else:  # 3D 点
             points = node
@@ -1075,6 +1077,18 @@ class HalfEdgeMesh2d(Mesh, Plotable):
         grid = pv.UnstructuredGrid(cells, cell_types, points)
 
         # 步骤 4: 保存为 VTU 文件
+        if point_data:
+            for name, array in point_data.items():
+                array = bm.asarray(array).reshape(-1)
+                if len(array) != len(points):
+                    raise ValueError(f"point_data['{name}'] 长度 {len(array)} != 节点数 {len(points)}")
+                grid.point_data[name] = array
+        if cell_data:
+            for name, array in cell_data.items():
+                array = bm.asarray(array).reshape(-1)
+                if len(array) != len(cell_vertices):
+                    raise ValueError(f"cell_data['{name}'] 长度 {len(array)} != 单元数 {len(cell_vertices)}")
+                grid.cell_data[name] = array
         grid.save(fname)
         print(f"VTU 文件已保存为 {fname}")
 
@@ -1094,7 +1108,21 @@ class HalfEdgeMesh2d(Mesh, Plotable):
             cell_ = node_map[value]
             cell.extend(bm.tolist(cell_))
 
-        # node, cell = read_bdf_mesh(file_path)
+        return HalfEdgeMesh2d.from_mixed_node_cell(node, cell)
+
+    @classmethod
+    def from_mixed_node_cell(cls, node: TensorLike, cell: List[List]):
+        """
+        create HalfEdgeMesh2d from mixed type node and cell data.
+
+        Parameters
+        node: TensorLike
+            the array of node coordinates, shape (NN, 2) or (NN, 3)
+        cell: List[List]
+            the list of cell connectivity, each cell is a list of node indices.
+            only triangles and quads are supported.(is true?)
+        """
+        from collections import defaultdict
 
         NC = len(cell)
         face_lens = [len(f) for f in cell]
@@ -1122,15 +1150,14 @@ class HalfEdgeMesh2d(Mesh, Plotable):
                 e = edge_dict[edge]
 
                 half_edge = [-1] * 5
-                half_edge[0] = v1        # vertex
-                half_edge[1] = c         # cell id
+                half_edge[0] = v1  # vertex
+                half_edge[1] = c  # cell id
                 half_edge_list.append(half_edge)
                 edge_to_half_edges[edge].append(half_edge_idx)
                 half_edge_idx += 1
 
         half_edge = bm.array(half_edge_list, dtype=int)
         ND = half_edge.shape[0]
-
 
         offset = 0
         for nf in face_lens:
@@ -1139,7 +1166,7 @@ class HalfEdgeMesh2d(Mesh, Plotable):
                 next_ = offset + (i + 1) % nf
                 pre_ = offset + (i - 1) % nf
                 half_edge[curr][2] = next_  # next half-edge index
-                half_edge[curr][3] = pre_   # previous half-edge index
+                half_edge[curr][3] = pre_  # previous half-edge index
 
             offset += nf
 
@@ -1158,6 +1185,8 @@ class HalfEdgeMesh2d(Mesh, Plotable):
                     half_edge[d][5] = -1
 
         return cls(node, half_edge)
+
+
 
 
 
