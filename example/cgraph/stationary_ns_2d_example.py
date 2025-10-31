@@ -7,7 +7,7 @@ pde = cgraph.create("StationaryNS2d")
 mesher = cgraph.create("Box2d")
 uspacer = cgraph.create("TensorFunctionSpace")
 pspacer = cgraph.create("FunctionSpace")
-simulation = cgraph.create("StationaryNSStokes")
+simulation = cgraph.create("StationaryNSNewton")
 dbc = cgraph.create("StationaryNSDBC")
 StationaryNSRun = cgraph.create("StationaryNSRun")
 
@@ -43,7 +43,8 @@ StationaryNSRun(
     mesh = mesher()
 )
 
-WORLD_GRAPH.output(uh = StationaryNSRun().uh, ph = StationaryNSRun().ph)
+WORLD_GRAPH.output(uh = StationaryNSRun().uh, ph = StationaryNSRun().ph, 
+                   uh_x = StationaryNSRun().uh_x, uh_y = StationaryNSRun().uh_y)
 WORLD_GRAPH.error_listeners.append(print)
 WORLD_GRAPH.execute()
 print(WORLD_GRAPH.get())

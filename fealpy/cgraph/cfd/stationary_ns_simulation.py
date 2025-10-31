@@ -5,8 +5,27 @@ __all__ = ["StationaryNSNewton", "StationaryNSOssen", "StationaryNSStokes"]
 
 
 class StationaryNSNewton(CNodeType):
+    r"""Stationary incompressible Navier-Stokes solver using Newton iteration.
+
+    Inputs:
+        constitutive (int): Constitutive equation type (1 for standard viscous, 2 for general viscous work).
+        mu (float): Dynamic viscosity coefficient.
+        rho (float): Fluid density or a function returning density values.
+        source (function): Source term function in the momentum equation.
+        uspace (space): Velocity finite element function space.
+        pspace (space): Pressure finite element function space.
+        q (int, optional): Quadrature degree for numerical integration (default=3, minimum=3).
+
+    Outputs:
+        BForm (linops): Block bilinear form representing the linearized Navier-Stokes operator.
+        LForm (linops): Block linear form representing the right-hand side vector.
+        update (function): Function that updates the coefficients of the bilinear and linear forms 
+                           based on the current velocity iterate.
+    """
     TITLE: str = "稳态 NS 方程 Newton 迭代格式"
     PATH: str = "流体.有限元算法"
+    DESC: str = """该节点实现稳态不可压 Navier-Stokes 方程的 Newton 线性化格式，构建线性化的双线性与线性算子，
+                并提供系数更新函数以迭代修正速度场，实现非线性方程的有限元求解。"""
     INPUT_SLOTS = [
         PortConf("constitutive", DataType.MENU, 0, title="本构方程", default=1, items=[i for i in range(1, 2)]),
         PortConf("mu", DataType.FLOAT, title="粘度系数"),
@@ -91,8 +110,27 @@ class StationaryNSNewton(CNodeType):
 
 
 class StationaryNSOssen(CNodeType):
+    r"""Stationary incompressible Navier-Stokes solver using Oseen iteration.
+
+    Inputs:
+        constitutive (int): Constitutive equation type (1 for standard viscous, 2 for general viscous work).
+        mu (float): Dynamic viscosity coefficient.
+        rho (float or callable): Fluid density or a function returning density values.
+        source (function): Source term function in the momentum equation.
+        uspace (space): Velocity finite element function space.
+        pspace (space): Pressure finite element function space.
+        q (int, optional): Quadrature degree for numerical integration (default=3, minimum=3).
+
+    Outputs:
+        BForm (linops): Block bilinear form representing the Oseen linearized Navier-Stokes operator.
+        LForm (linops): Block linear form representing the right-hand side vector.
+        update (function): Function that updates the coefficients of the bilinear and linear forms 
+                           based on the current velocity iterate.
+    """
     TITLE: str = "稳态 NS 方程 Ossen 迭代格式"
     PATH: str = "流体.有限元算法"
+    DESC: str = """该节点实现稳态不可压 Navier-Stokes 方程的 Oseen 线性化格式，通过构建对流、扩散及压力耦合算子并提供
+                系数更新函数，实现对非线性系统的线性近似与迭代求解。"""
     INPUT_SLOTS = [
         PortConf("constitutive", DataType.MENU, 0, title="本构方程", default=1, items=[i for i in range(1, 2)]),
         PortConf("mu", DataType.FLOAT, title="粘度系数"),
@@ -158,11 +196,30 @@ class StationaryNSOssen(CNodeType):
 
         return A, L, update
 
-
-
 class StationaryNSStokes(CNodeType):
+    r"""Finite element discretization of steady incompressible Navier-Stokes equations 
+        using Stokes formulation.
+
+    Inputs:
+        constitutive (int): Constitutive equation type (1 for standard viscous, 2 for 
+                            general viscous work).
+        mu (float): Dynamic viscosity coefficient.
+        rho (float): Fluid density or a function returning density values.
+        source (function): Source term function in the momentum equation.
+        uspace (space): Velocity finite element function space.
+        pspace (space): Pressure finite element function space.
+        q (int, optional): Quadrature degree for numerical integration (default=3, minimum=3).
+        
+    Outputs:
+        BForm (linops): Block bilinear form representing the Stokes operator.
+        LForm (linops): Block linear form representing the right-hand side vector.
+        update (function): Function that updates the coefficients of the bilinear and 
+                            linear forms.
+    """
     TITLE: str = "稳态 NS 方程 Stokes 迭代格式"
     PATH: str = "流体.有限元算法"
+    DESC: str = """基于有限元构建稳态不可压 Stokes 型离散算子，组装黏性与压强耦合项并提供
+                系数更新函数，用于稳态流场的有限元求解。"""
     INPUT_SLOTS = [
         PortConf("constitutive", DataType.MENU, 0, title="本构方程", default=1, items=[i for i in range(1, 2)]),
         PortConf("mu", DataType.FLOAT, title="粘度系数"),
